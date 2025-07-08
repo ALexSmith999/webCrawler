@@ -16,7 +16,7 @@ import java.util.Queue;
 
 
 public class HtmlParser {
-    public record ref(String value, int level) {}
+    /*public record ref(String value, int level) {}
     public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
         Queue<ref> queue = new LinkedList<>();
         ArrayList<String> sites = new ArrayList<>(List.of(
@@ -51,7 +51,7 @@ public class HtmlParser {
                 System.out.println( next);
             }
             //CONVERT TO JSON
-            /*Person person = new Person("mkyong", 42);
+            Person person = new Person("mkyong", 42);
 
             ObjectMapper om = new ObjectMapper();
 
@@ -65,7 +65,7 @@ public class HtmlParser {
 
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
-            }*/
+            }
         }
-    }
+    }*/
 }
