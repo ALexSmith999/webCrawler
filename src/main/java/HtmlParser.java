@@ -20,9 +20,7 @@ public class HtmlParser {
     public static void main(String[] args) throws IOException, InterruptedException, URISyntaxException {
         Queue<ref> queue = new LinkedList<>();
         ArrayList<String> sites = new ArrayList<>(List.of(
-                "https://www.transfermarkt.com"
-                , "https://fbref.com/en/"
-                , "https://footystats.org/"));
+                "https://www.transfermarkt.com"));
         for (var site : sites) {
             queue.add(new ref(site, 1));}
 
@@ -38,7 +36,6 @@ public class HtmlParser {
                     .build();
             HttpResponse<String> resp
                     = client.send(request, HttpResponse.BodyHandlers.ofString());
-            Thread.sleep(2000);
 
             Document doc = Jsoup.parse(resp.body(), currentRef.value);
             Elements links = doc.getElementsByTag("a");

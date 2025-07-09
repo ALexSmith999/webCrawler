@@ -8,19 +8,20 @@ import java.util.concurrent.BlockingQueue;
 
 public class Initialization implements Runnable {
     private final Socket client;
-    BlockingQueue<QueueItem> queue;
-    Initialization (Socket client, BlockingQueue<QueueItem> rawLinksQueue){
+    BlockingQueue<RawQueueItem> queue;
+    Initialization (Socket client, BlockingQueue<RawQueueItem> rawLinksQueue){
         this.client = client;
         this.queue = rawLinksQueue;
     }
 
     @Override
     public void run() {
-        try (InputStream in = client.getInputStream(); OutputStream out = client.getOutputStream()){
+        try (InputStream in = client.getInputStream();
+             OutputStream out = client.getOutputStream()) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
             int currVal;
-            while ((currVal = in.read()) != -1){
+            while ((currVal = in.read()) != -1) {
                 buffer.write(currVal);
             }
 
@@ -29,9 +30,17 @@ public class Initialization implements Runnable {
             out.write(dataToBeSend);
             client.shutdownOutput();
 
-            queue.put(new QueueItem(buffer.toString(StandardCharsets.UTF_8), 1));
+            String link = buffer.toString(StandardCharsets.UTF_8);
+            if (ValidationChecks.linkIsValid(link)) {
+                queue.put(new RawQueueItem(link, 1));
+                System.out.println("Link has been added to the Main Queue");
+            }
+            else {
+                System.out.println("Link is invalid");
+            }
 
         } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }
