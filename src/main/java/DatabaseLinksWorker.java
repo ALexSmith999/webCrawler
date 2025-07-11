@@ -3,14 +3,19 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
 
 public class DatabaseLinksWorker {
-    static public void processCheckedQueue (BlockingQueue<DbQueueItem> databaseQueue, Logger logger){
+    /*
+    DatabaseLinksWorker
+        - Consumes the database queue
+        - Loads a JSON file to the database
+    */
+    static public void processCheckedQueue (BlockingQueue<DbQueueItem> databaseQueue, Logger logger, Set<String> seen){
         Runnable writer = () -> {
             try (BufferedWriter writerOut = new BufferedWriter(new FileWriter("src/main/resources/output.txt", true))) {
-                while (true) {
+                while (!Thread.currentThread().isInterrupted()) {
                     DbQueueItem line = databaseQueue.take();
                     //writerOut.write(line.json());
                     writerOut.write(line.link());
@@ -18,9 +23,11 @@ public class DatabaseLinksWorker {
                     writerOut.flush();
                     logger.debug("The link {} has been loaded", line.link());
                 }
-            } catch (IOException | InterruptedException e) {
-                logger.warn("Database is inaccessible");
+            } catch (InterruptedException e) {
+                logger.warn("DatabaseLinksWorker interrupted. Exiting ..");
                 Thread.currentThread().interrupt();
+            } catch (IOException e) {
+                logger.warn("Failed to load to a database");
             }
         };
         new Thread(writer, "FileWriterThread").start();

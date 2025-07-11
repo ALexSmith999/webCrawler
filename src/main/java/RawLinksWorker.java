@@ -3,21 +3,31 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 
 public class RawLinksWorker {
+    /*
+    RawLinksWorker :
+    - Consume messages from the rawQueue
+    - If the message has not been processed yet, continues
+    - If an item reaches max depth, validates a link, and puts it in the validQueue
+    - Extracts all child links, validates them, and puts them in the rawQueue
+    * */
     static public void processRawQueue (BlockingQueue<RawQueueItem> rawQueue,
-                                        BlockingQueue<ValidQueueItem> validQueue,
-                                        BlockingQueue<String> seen, ExecutorService pool, int size, int DEPTH,
+                                        BlockingQueue<ValidQueueItem> validQueue, Set<String> seen, ExecutorService pool, int size, int DEPTH,
                                         Logger logger, int httpResponseTimeOut){
         Runnable task = () -> {
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
                     RawQueueItem item = rawQueue.take();
-                    seen.put(item.message());
-
                     Document doc;
+
+                    if (!seen.add(item.message())) {
+                        continue;
+                    }
+
                     if (item.level() >= DEPTH) {
                         doc = AppHtmlResponse.returnDoc(item, httpResponseTimeOut);
                         validQueue.put(new ValidQueueItem(item.message(), doc.toString()));
@@ -27,6 +37,7 @@ public class RawLinksWorker {
                     }
 
                     doc = AppHtmlResponse.returnDoc(item, httpResponseTimeOut);
+                    validQueue.put(new ValidQueueItem(item.message(), doc.toString()));
                     logger.debug("The document has been extracted " +
                             "for the link : {}", item.message());
 
@@ -36,21 +47,17 @@ public class RawLinksWorker {
                         if (!ValidationChecks.linkIsValid(next, httpResponseTimeOut, logger)) {
                             continue;
                         }
-                        logger.debug("The child link {} has been put " +
-                                "into the raw Queue" +
-                                "for the link : {}", next, item.message());
-                        if (seen.contains(next)) {
-                            continue;
-                        }
                         rawQueue.put(new RawQueueItem(next, item.level() + 1));
+                        logger.debug("The child link {} has been put into the rawQueue " +
+                                "for the link : {}", next, item.message());
                     }
-                    validQueue.put(new ValidQueueItem(item.message(), doc.toString()));
 
-                } catch (InterruptedException | IOException e) {
-                    logger.warn("There is an error while consuming the rawQueue" +
-                            " or parsing a html document");
+                } catch (InterruptedException e) {
+                    logger.warn("RawLinksWorker interrupted. Exiting ..");
                     Thread.currentThread().interrupt();
                     break;
+                } catch (IOException e) {
+                    logger.warn("IO error while processing rawQueue or parsing HTML");
                 }
             }
         };

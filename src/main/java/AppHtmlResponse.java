@@ -9,6 +9,9 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 public class AppHtmlResponse {
+    /*
+    Sends a request, and parses and returns a document body
+    */
     public static Document returnDoc(RawQueueItem item, int httpResponseTimeOut)
             throws InterruptedException, IOException {
         HttpClient client = AppHttpClient.INSTANCE.getClient();

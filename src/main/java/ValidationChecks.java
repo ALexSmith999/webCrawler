@@ -7,8 +7,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class ValidationChecks {
+    /*
+    Checks if a link is available by sending a request that does not contain a response body
+    if error happens - false
+    if a server error or resource is unavailable - false
+    else true
+    */
     static public boolean linkIsValid(String link, int httpResponseTimeOut, Logger logger){
-
         if (!link.startsWith("http")) {
             return false;
         }
@@ -24,9 +29,12 @@ public class ValidationChecks {
                     , HttpResponse.BodyHandlers.discarding());
             code = response.statusCode();
             return isResponseValid(code);
-        } catch (InterruptedException | IOException e) {
-            logger.warn("An error while checking {}: ", link);
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            return false;
+        } catch (IOException e) {
+            logger.warn("There is an error " +
+                    "while requesting the link {}: code {}: ", link, code);
             return false;
         }
     }

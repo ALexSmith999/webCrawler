@@ -10,6 +10,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 
 public class Initialization implements Runnable {
+    /*
+    Class is responsible for :
+    - Creating a two-way communication channel to receive requests
+      and send short acknowledgments
+    - The protocol suggests sending a shutdown message (-1) to track closing messages
+    - Adds the head to the raw Queue
+    **/
 
     private final Socket client;
     private static final Logger logger = LogManager.getLogger(Initialization.class);
