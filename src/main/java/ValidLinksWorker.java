@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -7,7 +8,7 @@ import java.util.concurrent.ExecutorService;
 public class ValidLinksWorker {
     static public void processPopulatedRawQueue (BlockingQueue<ValidQueueItem> validQueue,
                                          BlockingQueue<DbQueueItem> databaseQueue,
-                                         ExecutorService pool, int size){
+                                         ExecutorService pool, int size, Logger logger){
         Runnable task = () -> {
             while (true) {
                 try {
@@ -16,11 +17,15 @@ public class ValidLinksWorker {
                     String json;
                     try {
                         json = om.writeValueAsString(item);
+                        logger.debug("A valid json has been obtained : {}",  item.link());
                         databaseQueue.put(new DbQueueItem(item.link(), json));
                     } catch (JsonProcessingException e) {
-                        throw new RuntimeException("Failed to Deserialize String to Json", e);
+                        logger.warn("Cannot obtain a valid Json {}: ",  item.link());
+                        throw new RuntimeException("Failed to serialize String to Json", e);
                     }
                 } catch (InterruptedException | RuntimeException e)  {
+                    logger.warn("There is an error while getting a Json representation " +
+                            "/ populating the database queue ");
                     Thread.currentThread().interrupt();
                     break;
                 }

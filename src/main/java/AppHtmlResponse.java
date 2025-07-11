@@ -6,13 +6,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 public class AppHtmlResponse {
-    public static Document returnDoc(RawQueueItem item) throws IOException, InterruptedException {
+    public static Document returnDoc(RawQueueItem item, int httpResponseTimeOut)
+            throws InterruptedException, IOException {
         HttpClient client = AppHttpClient.INSTANCE.getClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(item.message()))
-                .timeout(java.time.Duration.ofSeconds(2))
+                .timeout(Duration.ofSeconds(httpResponseTimeOut))
                 .build();
         HttpResponse<String> resp
                 = client.send(request, HttpResponse.BodyHandlers.ofString());
