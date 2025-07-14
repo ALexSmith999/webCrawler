@@ -1,6 +1,11 @@
+package server.raw;
+
 import org.apache.logging.log4j.Logger;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import server.requests.AppHtmlResponse;
+import server.transformation.TransformQueueItem;
+import server.utils.ValidationChecks;
 
 import java.io.IOException;
 import java.util.Set;
@@ -12,12 +17,12 @@ public class RawLinksWorker {
     RawLinksWorker :
     - Consume messages from the rawQueue
     - If the message has not been processed yet, continues
-    - If an item reaches max depth, validates a link, and puts it in the validQueue
+    - If an item reaches max depth, validates a link, and puts it in the validQueue without extracting child links
     - Extracts all child links, validates them, and puts them in the rawQueue
     * */
-    static public void processRawQueue (BlockingQueue<RawQueueItem> rawQueue,
-                                        BlockingQueue<ValidQueueItem> validQueue, Set<String> seen, ExecutorService pool, int size, int DEPTH,
-                                        Logger logger, int httpResponseTimeOut){
+    public void processRawQueue (BlockingQueue<RawQueueItem> rawQueue,
+                                 BlockingQueue<TransformQueueItem> validQueue, Set<String> seen, ExecutorService pool, int size, int DEPTH,
+                                 Logger logger, int httpResponseTimeOut){
         Runnable task = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -30,14 +35,14 @@ public class RawLinksWorker {
 
                     if (item.level() >= DEPTH) {
                         doc = AppHtmlResponse.returnDoc(item, httpResponseTimeOut);
-                        validQueue.put(new ValidQueueItem(item.message(), doc.toString()));
+                        validQueue.put(new TransformQueueItem(item.message(), doc.toString()));
                         logger.debug("The final depth has been reached, " +
                                 "no further processing for the next link : {}", item.message());
                         continue;
                     }
 
                     doc = AppHtmlResponse.returnDoc(item, httpResponseTimeOut);
-                    validQueue.put(new ValidQueueItem(item.message(), doc.toString()));
+                    validQueue.put(new TransformQueueItem(item.message(), doc.toString()));
                     logger.debug("The document has been extracted " +
                             "for the link : {}", item.message());
 

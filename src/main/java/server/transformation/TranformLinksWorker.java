@@ -1,25 +1,27 @@
+package server.transformation;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Logger;
+import server.database.DbQueueItem;
 
-import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 
-public class ValidLinksWorker {
+public class TranformLinksWorker {
     /*
     ValidLinksWorker
         - Consumes the valid Queue
         - creates a JSON file from a record item
         - Adds a new message to the database queue
-     * */
-    static public void processPopulatedRawQueue (BlockingQueue<ValidQueueItem> validQueue,
+     */
+    public void transformRawQueueItem (BlockingQueue<TransformQueueItem> validQueue,
                                          BlockingQueue<DbQueueItem> databaseQueue,
                                          ExecutorService pool, int size, Logger logger){
         Runnable task = () -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    ValidQueueItem item = validQueue.take();
+                    TransformQueueItem item = validQueue.take();
                     ObjectMapper om = new ObjectMapper();
                     String json;
                     try {

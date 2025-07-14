@@ -1,3 +1,5 @@
+package server.database;
+
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
@@ -12,7 +14,7 @@ public class DatabaseLinksWorker {
         - Consumes the database queue
         - Loads a JSON file to the database
     */
-    static public void processCheckedQueue (BlockingQueue<DbQueueItem> databaseQueue, Logger logger, Set<String> seen){
+    public void savePreparedItem (BlockingQueue<DbQueueItem> databaseQueue, Logger logger, Set<String> seen){
         Runnable writer = () -> {
             try (BufferedWriter writerOut = new BufferedWriter(new FileWriter("src/main/resources/output.txt", true))) {
                 while (!Thread.currentThread().isInterrupted()) {

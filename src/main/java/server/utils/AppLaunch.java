@@ -1,7 +1,12 @@
+package server.utils;
+
 import org.apache.logging.log4j.Logger;
 
 public class AppLaunch {
-    ;
+    /*
+    Provides the information about the application start up,
+    including chosen parameters
+    */
     static public void start (Logger logger, int NUM_OF_THREADS, int DEPTH, int TIME, int maxQueueSize){
         logger.info("Web server has been started");
         logger.info("The number of threads is equal to : {}", NUM_OF_THREADS);

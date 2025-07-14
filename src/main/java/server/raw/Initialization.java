@@ -1,5 +1,8 @@
+package server.raw;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import server.utils.ValidationChecks;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -19,16 +22,17 @@ public class Initialization implements Runnable {
     **/
 
     private final Socket client;
-    private static final Logger logger = LogManager.getLogger(Initialization.class);
     BlockingQueue<RawQueueItem> queue;
     private int httpResponseTimeOut;
     private int maxRetries;
+    private Logger logger;
 
-    Initialization (Socket client, BlockingQueue<RawQueueItem> rawLinksQueue,
-                    int httpResponseTimeOut){
+    public Initialization(Socket client, BlockingQueue<RawQueueItem> rawLinksQueue,
+                          int httpResponseTimeOut, Logger logger){
         this.client = client;
         this.queue = rawLinksQueue;
         this.httpResponseTimeOut = httpResponseTimeOut;
+        this.logger = logger;
         this.maxRetries = maxRetries;
     }
 
@@ -52,15 +56,15 @@ public class Initialization implements Runnable {
             if (ValidationChecks.linkIsValid(link, httpResponseTimeOut, logger)) {
                 queue.put(new RawQueueItem(link, 1));
                 logger.info("Link has been added to the Main Queue : {}", link);
-            }
-            else {
+            } else {
                 logger.info("Link is invalid : {}", link);
             }
 
-        } catch (IOException | InterruptedException e) {
-            logger.warn("There is an error while sending " +
-                    "/ receiving messages via the network connection");
+        } catch (InterruptedException e) {
+            logger.warn("Initialization interrupted. Exiting ..");
             Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            logger.warn("Client / server communication failure");
         }
     }
 }

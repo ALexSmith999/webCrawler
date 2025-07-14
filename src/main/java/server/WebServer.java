@@ -1,11 +1,22 @@
+package server;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import server.database.DatabaseLinksWorker;
+import server.database.DbQueueItem;
+import server.raw.Initialization;
+import server.raw.RawLinksWorker;
+import server.raw.RawQueueItem;
+import server.transformation.TranformLinksWorker;
+import server.utils.AppLaunch;
+import server.transformation.*;
+import server.transformation.TransformQueueItem;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Set;
 import java.util.concurrent.*;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class WebServer {
     /*
@@ -14,7 +25,7 @@ public class WebServer {
     - creates thread pools
         There are three thread pools for different purposes:
             RawPool manages the rawQueue that contains raw links
-            ValidPool manages the validQueue, which contains filtered links
+            ValidPool manages the validQueue, which contains filtered valid links
             DatabasePool manages the DatabaseQueue that contains links prepared for a load.
     - manages a correct exit (addShutdownHook), closing all resources and threads
     - launches all workers (RawLinksWorker, ValidLinksWorker, DatabaseLinksWorker)
@@ -26,11 +37,6 @@ public class WebServer {
     static int DEPTH = 3;//how many steps from a parent link to a child is supposed to be done
     static int HTTP_RESPONSE_TIME_OUT = 10;//for how long to wait for a response
     static int MAX_QUEUE_SIZE = 10000;//limits a value to avoid memory leaks
-
-    static BlockingQueue<RawQueueItem> rawLinksQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
-    static BlockingQueue<ValidQueueItem> validLinksQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
-    static BlockingQueue<DbQueueItem> databaseQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
-    static Set<String> seen = ConcurrentHashMap.newKeySet();
     private static final Logger logger = LogManager.getLogger(WebServer.class);
 
     public static void main(String[] args){
@@ -46,16 +52,21 @@ public class WebServer {
         MAX_QUEUE_SIZE = args.length < 5 ? MAX_QUEUE_SIZE : Integer.parseInt(args[4]);
         AppLaunch.start(logger, NUM_OF_THREADS, DEPTH, HTTP_RESPONSE_TIME_OUT, MAX_QUEUE_SIZE);
 
+        BlockingQueue<RawQueueItem> rawLinksQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
+        BlockingQueue<TransformQueueItem> validLinksQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
+        BlockingQueue<DbQueueItem> databaseQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
+        Set<String> seen = ConcurrentHashMap.newKeySet();
+
         ExecutorService mainPool = Executors.newFixedThreadPool(NUM_OF_THREADS);
         ExecutorService rawPool = Executors.newFixedThreadPool(NUM_OF_THREADS);
         ExecutorService validLinksPool = Executors.newFixedThreadPool(NUM_OF_THREADS);
         //ExecutorService databasePool = Executors.newFixedThreadPool(NUM_OF_THREADS);
 
-        RawLinksWorker.processRawQueue(rawLinksQueue, validLinksQueue, seen, rawPool,
+        new RawLinksWorker().processRawQueue(rawLinksQueue, validLinksQueue, seen, rawPool,
                 NUM_OF_THREADS, DEPTH, logger, HTTP_RESPONSE_TIME_OUT);
-        ValidLinksWorker.processPopulatedRawQueue(validLinksQueue, databaseQueue, validLinksPool,
+        new TranformLinksWorker().transformRawQueueItem(validLinksQueue, databaseQueue, validLinksPool,
                 NUM_OF_THREADS, logger);
-        DatabaseLinksWorker.processCheckedQueue(databaseQueue, logger, seen);
+        new DatabaseLinksWorker().savePreparedItem(databaseQueue, logger, seen);
 
         //starts server socket
         ServerSocket server;
@@ -94,7 +105,7 @@ public class WebServer {
             while (!Thread.currentThread().isInterrupted()) {
                 Socket client = server.accept();
                 //instantiates the mandatory class
-                mainPool.execute(new Initialization(client, rawLinksQueue, HTTP_RESPONSE_TIME_OUT));
+                mainPool.execute(new Initialization(client, rawLinksQueue, HTTP_RESPONSE_TIME_OUT, logger));
             }
         } catch (IOException e) {
             logger.error("Server loop terminated.");

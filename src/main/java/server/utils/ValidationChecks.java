@@ -1,4 +1,7 @@
+package server.utils;
+
 import org.apache.logging.log4j.Logger;
+import server.requests.AppHttpClient;
 
 import java.io.IOException;
 import java.net.URI;

@@ -1,5 +1,9 @@
+package server.requests;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import server.requests.*;
+import server.raw.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,7 +14,7 @@ import java.time.Duration;
 
 public class AppHtmlResponse {
     /*
-    Sends a request, and parses and returns a document body
+    Sends a request, parses and returns a document body
     */
     public static Document returnDoc(RawQueueItem item, int httpResponseTimeOut)
             throws InterruptedException, IOException {
