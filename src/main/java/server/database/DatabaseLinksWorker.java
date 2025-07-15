@@ -20,7 +20,7 @@ public class DatabaseLinksWorker {
                 while (!Thread.currentThread().isInterrupted()) {
                     DbQueueItem line = databaseQueue.take();
                     //writerOut.write(line.json());
-                    writerOut.write(line.link());
+                    writerOut.write(line.json());
                     writerOut.newLine();
                     writerOut.flush();
                     logger.debug("The link {} has been loaded", line.link());
