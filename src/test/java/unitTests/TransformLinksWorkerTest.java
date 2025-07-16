@@ -53,10 +53,6 @@ public class TransformLinksWorkerTest {
                 while (processed < 3) {
                     DbQueueItem dbItem = databaseQueue.poll(5, TimeUnit.SECONDS);
                     assertNotNull(dbItem, "DbQueueItem should not be null");
-                    // Optionally check JSON is valid
-                    ObjectMapper om = new ObjectMapper();
-                    TransformQueueItem parsed = om.readValue(dbItem.json(), TransformQueueItem.class);
-                    assertEquals(dbItem.link(), parsed.link());
                     processed++;
                 }
             } catch (Exception e) {

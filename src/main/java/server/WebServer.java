@@ -1,5 +1,8 @@
 package server;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import server.database.DatabaseLinksWorker;
@@ -9,12 +12,13 @@ import server.raw.RawLinksWorker;
 import server.raw.RawQueueItem;
 import server.transformation.TranformLinksWorker;
 import server.utils.AppLaunch;
-import server.transformation.*;
 import server.transformation.TransformQueueItem;
+import server.utils.ProjectVariables;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -32,12 +36,32 @@ public class WebServer {
     - launches a Server Socket that listens for incoming requests
     - Thread - safe (concurrent utils are used like nonblocking queues and hashmaps)
     **/
-
     static int NUM_OF_THREADS = Runtime.getRuntime().availableProcessors(); //number of threads(workers) per thread pool, default — number of cores
     static int DEPTH = 3;//how many steps from a parent link to a child is supposed to be done
     static int HTTP_RESPONSE_TIME_OUT = 10;//for how long to wait for a response
     static int MAX_QUEUE_SIZE = 10000;//limits a value to avoid memory leaks
     private static final Logger logger = LogManager.getLogger(WebServer.class);
+    static MongoDatabase DB;
+    static MongoClient mongoclient;
+
+    public static Properties customProperties = new Properties();
+    static {
+        try (var file = WebServer.class.getResourceAsStream("/config.properties")) {
+            customProperties.load(file);
+        } catch (IOException e) {
+            logger.warn("ProjectVariables File does not exists");
+            throw new RuntimeException(e);
+        }
+
+        StringBuilder uri = new StringBuilder("mongodb://");
+        uri.append(customProperties.getProperty(ProjectVariables.DB_HOST.label));
+        uri.append(":");
+        uri.append(customProperties.getProperty(ProjectVariables.DB_PORT.label));
+
+        mongoclient = MongoClients.create(uri.toString());
+        DB = mongoclient.getDatabase(customProperties
+                    .getProperty(ProjectVariables.DB_NAME.label));
+    }
 
     public static void main(String[] args){
 
@@ -66,7 +90,7 @@ public class WebServer {
                 NUM_OF_THREADS, DEPTH, logger, HTTP_RESPONSE_TIME_OUT);
         new TranformLinksWorker().transformRawQueueItem(validLinksQueue, databaseQueue, validLinksPool,
                 NUM_OF_THREADS, logger);
-        new DatabaseLinksWorker().savePreparedItem(databaseQueue, logger, seen);
+        new DatabaseLinksWorker().savePreparedItem(databaseQueue, logger, seen, DB);
 
         //starts server socket
         ServerSocket server;
@@ -85,6 +109,8 @@ public class WebServer {
             } catch (IOException e) {
                 logger.warn("Failed to close server socket.");
             }
+
+            mongoclient.close();
 
             rawPool.shutdownNow();
             validLinksPool.shutdownNow();

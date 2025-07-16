@@ -16,7 +16,7 @@ public class ValidationChecksTest {
     Logger logger = LogManager.getLogger(ValidationChecksTest.class);
 
     @BeforeAll
-    static void startServer() throws IOException {
+    static void startServer() throws IOException, InterruptedException {
         testServer = new TestHttpServer();
         testServer.start();
     }

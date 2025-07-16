@@ -2,6 +2,7 @@ package server.transformation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.Logger;
 import server.database.DbQueueItem;
 import server.utils.Encryption;
@@ -28,18 +29,16 @@ public class TranformLinksWorker {
                     TransformQueueItem item = validQueue.take();
                     ObjectMapper om = new ObjectMapper();
                     try {
-                        Map<String, Object> jsonMap = new LinkedHashMap<>();
-                        jsonMap.put("link", item.link());
-                        jsonMap.put("content", item.body());
-                        jsonMap.put("uid"
-                                , new Encryption(item.link()).returnSHA1());
-                        jsonMap.put("content_hash"
-                                , new Encryption(item.body()).returnSHA1());
-                        String json = om.writeValueAsString(jsonMap);
+
+                        ObjectNode jsonNode = om.createObjectNode();
+                        jsonNode.put("link", item.link());
+                        jsonNode.put("content", item.body());
+                        jsonNode.put("uid", new Encryption(item.link()).returnSHA1());
+                        jsonNode.put("content_hash", new Encryption(item.body()).returnSHA1());
+                        jsonNode.put("version", 1);
+
                         logger.debug("A valid json has been obtained : {}",  item.link());
-                        databaseQueue.put(new DbQueueItem(item.link(), json));
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                        databaseQueue.put(new DbQueueItem(item.link(), jsonNode));
                     } catch (NoSuchAlgorithmException e) {
                         throw new RuntimeException(e);
                     }
