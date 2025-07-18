@@ -20,7 +20,7 @@ public class RecordsTest {
 
     @Test
     void testRawQueueItem() {
-        RawQueueItem raw = new RawQueueItem("http://example.com", 2);
+        RawQueueItem raw = new RawQueueItem("http://example.com", "http://example.com", 2);
         assertEquals("http://example.com", raw.message());
         assertEquals(2, raw.level());
     }

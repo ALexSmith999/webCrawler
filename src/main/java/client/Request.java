@@ -9,6 +9,8 @@ public class Request {
         int port = 1300;
         ArrayList<String> messages = new ArrayList<>(List.of(
                 "https://books.toscrape.com"
+                //"https://quotes.toscrape.com/"
+                //"https://sandbox.oxylabs.io/products"
         ));
         for (int i = 0; i < messages.size(); i++) {
             Thread th = new Thread(new RequestBody(messages.get(i), host, port));

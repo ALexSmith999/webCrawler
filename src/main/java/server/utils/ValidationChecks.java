@@ -44,8 +44,9 @@ public class ValidationChecks {
     static public boolean isResponseValid(int status){
         return status >= 200 && status < 400;
     }
-    static public boolean linkIsSuccessor(String link, String previous){
-        return link.contains(previous);
+
+    static public boolean linkIsSuccessor(String parent, String child) {
+        return child.startsWith(parent);
     }
 
 }

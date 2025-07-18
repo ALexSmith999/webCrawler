@@ -52,7 +52,7 @@ public class RawLinksWorkerTest {
                             if (!ValidationChecks.linkIsValid(next, httpResponseTimeOut, logger)) {
                                 continue;
                             }
-                            rawQueue.put(new RawQueueItem(next, item.level() + 1));
+                            rawQueue.put(new RawQueueItem(item.parent(), next, item.level() + 1));
                             logger.debug("Enqueued child: {}", next);
                         }
                     }

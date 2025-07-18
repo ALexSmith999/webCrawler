@@ -49,10 +49,12 @@ public class RawLinksWorker {
                     Elements links = doc.getElementsByTag("a");
                     for (var link : links) {
                         String next = link.attr("abs:href");
-                        if (!ValidationChecks.linkIsValid(next, httpResponseTimeOut, logger)) {
+                        if (!ValidationChecks.linkIsValid(next, httpResponseTimeOut, logger)
+                                || !ValidationChecks.linkIsSuccessor(item.parent(), next)
+                        ) {
                             continue;
                         }
-                        rawQueue.put(new RawQueueItem(next, item.level() + 1));
+                        rawQueue.put(new RawQueueItem(item.parent(), next, item.level() + 1));
                         logger.debug("The child link {} has been put into the rawQueue " +
                                 "for the link : {}", next, item.message());
                     }

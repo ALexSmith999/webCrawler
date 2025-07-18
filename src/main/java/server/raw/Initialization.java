@@ -54,7 +54,7 @@ public class Initialization implements Runnable {
 
             String link = buffer.toString(StandardCharsets.UTF_8);
             if (ValidationChecks.linkIsValid(link, httpResponseTimeOut, logger)) {
-                queue.put(new RawQueueItem(link, 1));
+                queue.put(new RawQueueItem(link, link, 1));
                 logger.info("Link has been added to the Main Queue : {}", link);
             } else {
                 logger.info("Link is invalid : {}", link);

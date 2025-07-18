@@ -52,7 +52,7 @@ public class RawLinksWorkerTests {
         String link = "http://localhost:8081/index.html";
 
         DEPTH = 1;
-        rawLinksQueue.add(new RawQueueItem(link, DEPTH));
+        rawLinksQueue.add(new RawQueueItem(link, link, DEPTH));
         new RawLinksWorkerTest().processRawQueue(rawLinksQueue, validLinksQueue, seen, rawPool,
                 NUM_OF_THREADS, DEPTH, logger, HTTP_RESPONSE_TIME_OUT, doneSignal);
         Thread.sleep(HTTP_RESPONSE_TIME_OUT*1000 + 1000);
@@ -72,7 +72,7 @@ public class RawLinksWorkerTests {
         String link = "http://localhost:8081/index.html";
         DEPTH = 2;
 
-        rawLinksQueue.add(new RawQueueItem(link, 1));
+        rawLinksQueue.add(new RawQueueItem(link, link, 1));
 
         new RawLinksWorkerTest().processRawQueue(rawLinksQueue, validLinksQueue, seen, rawPool,
                 NUM_OF_THREADS, DEPTH, logger, HTTP_RESPONSE_TIME_OUT, doneSignal);
@@ -95,7 +95,7 @@ public class RawLinksWorkerTests {
         String link = "http://localhost:8081/index.html";
         DEPTH = 3;
 
-        rawLinksQueue.add(new RawQueueItem(link, 1));
+        rawLinksQueue.add(new RawQueueItem(link, link, 1));
 
         new RawLinksWorkerTest().processRawQueue(
                 rawLinksQueue, validLinksQueue, seen, rawPool, NUM_OF_THREADS, DEPTH,
