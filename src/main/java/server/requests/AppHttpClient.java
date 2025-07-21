@@ -11,7 +11,7 @@ public enum AppHttpClient {
     private final HttpClient client;
     AppHttpClient(){
         client = HttpClient
-                .newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
+                .newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
                 .build();
     }
     public HttpClient getClient (){
